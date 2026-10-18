@@ -97,29 +97,29 @@
             background: rgba(33, 33, 33, 0.92);
             border: 4px solid var(--mc-border-black);
             box-shadow: inset -4px -4px 0px 0px #141414, inset 4px 4px 0px 0px #424242, 0 0 30px #000;
-            padding: 40px 30px;
+            padding: 55px 45px;
             text-align: center;
-            max-width: 650px;
+            max-width: 720px;
             width: 90%;
             pointer-events: auto;
             position: relative;
         }
 
         .mc-logo {
-            font-size: 1.8rem;
+            font-size: 1.9rem;
             color: #dddddd;
             text-shadow: 4px 4px 0px #373737, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 4px 4px 10px #000;
             letter-spacing: 2px;
-            margin: 0 0 25px 0;
+            margin: 0 0 55px 0;
             position: relative;
         }
 
         .splash-text {
             position: absolute;
-            right: -10px;
-            bottom: -18px;
+            right: 0px;
+            bottom: -22px;
             color: var(--mc-yellow);
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             text-shadow: 2px 2px 0px #3f3f00;
             transform: rotate(-12deg);
             animation: splashPulse 0.8s infinite alternate;
@@ -299,13 +299,11 @@
             padding: 4px 8px;
             font-size: 0.6rem;
             text-shadow: 1px 1px 0px #000;
+            transition: all 0.3s ease;
         }
 
         .badge-mc.badge-gpa {
-            color: var(--mc-bright-lime);
-            border-color: #00aa00;
-            box-shadow: 0 0 8px rgba(0, 255, 68, 0.4);
-            text-shadow: 0 0 6px var(--mc-bright-lime), 1px 1px 0px #000;
+            font-weight: bold;
         }
 
         .course-body {
@@ -443,7 +441,7 @@
                 <div class="splash-text" id="splash-text">Calculates Grade Loss!</div>
             </div>
 
-             <button class="mc-btn" onclick="setCreditMode(36); launchCalculator();">36 CREDITS MODE</button>
+            <button class="mc-btn" onclick="setCreditMode(36); launchCalculator();">36 CREDITS MODE</button>
             <button class="mc-btn" onclick="setCreditMode(30); launchCalculator();">30 CREDITS MODE</button>
         </div>
     </div>
@@ -491,7 +489,6 @@
     // 1. ДВИЖОК ПРЕДЗАГРУЗКИ И ВОСПРОИЗВЕДЕНИЯ ЛОКАЛЬНЫХ ФАЙЛОВ
     // ------------------------------------------------------------------
     
-    // Предзагружаем файлы в память
     const audioFiles = {
         oof: new Audio("Minecraft-Damage-Oof-Sound-Effect-HD.mp3"),
         xp:  new Audio("Minecraft-XP-Sound-effect.mp3"),
@@ -500,7 +497,6 @@
 
     function playSound(audioObject) {
         try {
-            // Клонируем поток для мгновенного наложения звуков при частых кликах
             const soundClone = audioObject.cloneNode(true);
             soundClone.volume = 0.85;
             soundClone.play().catch(e => {
@@ -509,17 +505,9 @@
         } catch(e) {}
     }
 
-    function playOofSound() {
-        playSound(audioFiles.oof);
-    }
-
-    function playXpSound() {
-        playSound(audioFiles.xp);
-    }
-
-    function playBtnSound() {
-        playSound(audioFiles.btn);
-    }
+    function playOofSound() { playSound(audioFiles.oof); }
+    function playXpSound() { playSound(audioFiles.xp); }
+    function playBtnSound() { playSound(audioFiles.btn); }
 
     // Фоновая музыка (Синтезатор спокойных аккордов Майнкрафта)
     let audioCtx = null;
@@ -751,7 +739,7 @@
     init3DBackground();
 
     // ------------------------------------------------------------------
-    // 3. GPA & GRADE LOSS CALCULATION ENGINE
+    // 3. GPA & GRADE LOSS CALCULATION ENGINE WITH CUSTOM DYNAMIC COLORS
     // ------------------------------------------------------------------
     let currentCreditMode = 36;
 
@@ -856,18 +844,27 @@
         }
     ];
 
+    // Функция возвращает букву, балл и настройки цвета плашки
     function getGradeDetails(percentage) {
-        if (percentage >= 95) return { grade: "A", points: 4.00 };
-        if (percentage >= 90) return { grade: "A-", points: 3.67 };
-        if (percentage >= 85) return { grade: "B+", points: 3.33 };
-        if (percentage >= 80) return { grade: "B", points: 3.00 };
-        if (percentage >= 75) return { grade: "B-", points: 2.67 };
-        if (percentage >= 70) return { grade: "C+", points: 2.33 };
-        if (percentage >= 65) return { grade: "C", points: 2.00 };
-        if (percentage >= 60) return { grade: "C-", points: 1.67 };
-        if (percentage >= 55) return { grade: "D+", points: 1.33 };
-        if (percentage >= 50) return { grade: "D", points: 1.00 };
-        return { grade: "F", points: 0.00 };
+        if (percentage >= 95) return { grade: "A",  points: 4.00, color: "#55ff55", border: "#00aa00", shadow: "rgba(85, 255, 85, 0.5)" };
+        if (percentage >= 90) return { grade: "A-", points: 3.67, color: "#55ff55", border: "#00aa00", shadow: "rgba(85, 255, 85, 0.5)" };
+        if (percentage >= 85) return { grade: "B+", points: 3.33, color: "#55ffff", border: "#00aaaa", shadow: "rgba(85, 255, 255, 0.5)" };
+        if (percentage >= 80) return { grade: "B",  points: 3.00, color: "#55ffff", border: "#00aaaa", shadow: "rgba(85, 255, 255, 0.5)" };
+        if (percentage >= 75) return { grade: "B-", points: 2.67, color: "#55ffff", border: "#00aaaa", shadow: "rgba(85, 255, 255, 0.5)" };
+        if (percentage >= 70) return { grade: "C+", points: 2.33, color: "#ffcc00", border: "#aa8800", shadow: "rgba(255, 204, 0, 0.5)" };
+        if (percentage >= 65) return { grade: "C",  points: 2.00, color: "#ffcc00", border: "#aa8800", shadow: "rgba(255, 204, 0, 0.5)" };
+        if (percentage >= 60) return { grade: "C-", points: 1.67, color: "#ffcc00", border: "#aa8800", shadow: "rgba(255, 204, 0, 0.5)" };
+        if (percentage >= 55) return { grade: "D+", points: 1.33, color: "#ff6600", border: "#aa3300", shadow: "rgba(255, 102, 0, 0.5)" };
+        if (percentage >= 50) return { grade: "D",  points: 1.00, color: "#ff6600", border: "#aa3300", shadow: "rgba(255, 102, 0, 0.5)" };
+        return { grade: "F", points: 0.00, color: "#ff3333", border: "#aa0000", shadow: "rgba(255, 51, 51, 0.5)" };
+    }
+
+    function getGPAColorDetails(gpa) {
+        if (gpa >= 3.67) return { color: "#55ff55" };
+        if (gpa >= 2.67) return { color: "#55ffff" };
+        if (gpa >= 1.67) return { color: "#ffcc00" };
+        if (gpa >= 1.00) return { color: "#ff6600" };
+        return { color: "#ff3333" };
     }
 
     function setCreditMode(mode) {
@@ -1072,13 +1069,28 @@
             if (totalPctEl) totalPctEl.innerText = coursePct.toFixed(2) + "%";
             if (lossPctEl) lossPctEl.innerText = courseLoss.toFixed(2) + "%";
             if (qpEl) qpEl.innerText = qualityPoints.toFixed(2);
-            if (badgeEl) badgeEl.innerText = `GRADE: ${gradeObj.grade} (${gradeObj.points.toFixed(2)})`;
+
+            // Динамическое изменение цвета и свечения плашки
+            if (badgeEl) {
+                badgeEl.innerText = `GRADE: ${gradeObj.grade} (${gradeObj.points.toFixed(2)})`;
+                badgeEl.style.color = gradeObj.color;
+                badgeEl.style.borderColor = gradeObj.border;
+                badgeEl.style.boxShadow = `0 0 10px ${gradeObj.shadow}`;
+                badgeEl.style.textShadow = `0 0 6px ${gradeObj.color}, 1px 1px 0px #000`;
+            }
         });
 
         const cumulativeGPA = totalActiveCredits > 0 ? (totalActiveQualityPoints / totalActiveCredits) : 0;
         const avgSemesterLoss = totalActiveCredits > 0 ? (totalActiveLossWeighted / totalActiveCredits) : 0;
 
-        document.getElementById("overall-gpa").innerText = cumulativeGPA.toFixed(2);
+        const overallGpaEl = document.getElementById("overall-gpa");
+        if (overallGpaEl) {
+            overallGpaEl.innerText = cumulativeGPA.toFixed(2);
+            const gpaColorObj = getGPAColorDetails(cumulativeGPA);
+            overallGpaEl.style.color = gpaColorObj.color;
+            overallGpaEl.style.textShadow = `0 0 10px ${gpaColorObj.color}, 2px 2px 0px #000000`;
+        }
+
         document.getElementById("overall-loss").innerText = avgSemesterLoss.toFixed(2) + "%";
         document.getElementById("overall-points").innerText = totalActiveQualityPoints.toFixed(2);
         document.getElementById("overall-credits").innerText = totalActiveCredits;
