@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Analytics: Minecraft Edition</title>
+    
+    <!-- Minecraft Pixel Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    
+    <!-- Three.js for 3D Voxel Graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --font-pixel: 'Press Start 2P', cursive;
+            --font-read: 'VT323', monospace;
+            --mc-bg: #121212;
+            --mc-gui-bg: #c6c6c6;
+            --mc-gui-dark: #212121;
+            --mc-border-light: #ffffff;
+            --mc-border-dark: #373737;
+            --mc-border-black: #000000;
+            --mc-bright-lime: #00ff44;
+            --mc-green: #55ff55;
+            --mc-red: #ff5555;
+            --mc-yellow: #ffff55;
+            --mc-aqua: #55ffff;
+            --mc-gold: #ffaa00;
+            --mc-text-shadow: 2px 2px 0px #000000;
+        }
+
+        * {
+            box-sizing: border-box;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background-color: var(--mc-bg);
+            background-image: radial-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.85)), 
+                url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23573d26'/><rect x='0' y='0' width='4' height='4' fill='%233a2717'/><rect x='8' y='2' width='4' height='4' fill='%233a2717'/><rect x='4' y='8' width='4' height='4' fill='%233a2717'/><rect x='12' y='10' width='4' height='4' fill='%233a2717'/><rect x='2' y='12' width='4' height='4' fill='%23785435'/><rect x='10' y='6' width='4' height='4' fill='%23785435'/></svg>");
+            background-size: auto, 64px 64px;
+            color: #ffffff;
+            font-family: var(--font-pixel);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* 3D Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        /* Audio Music Toggle Button */
+        .music-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 120;
+            padding: 10px 14px;
+            font-size: 0.65rem;
+        }
+
+        /* Minecraft Main Menu */
+        #landing-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        #landing-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .mc-menu-card {
+            background: rgba(33, 33, 33, 0.92);
+            border: 4px solid var(--mc-border-black);
+            box-shadow: inset -4px -4px 0px 0px #141414, inset 4px 4px 0px 0px #424242, 0 0 30px #000;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 650px;
+            width: 90%;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        .mc-logo {
+            font-size: 1.8rem;
+            color: #dddddd;
+            text-shadow: 4px 4px 0px #373737, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 4px 4px 10px #000;
+            letter-spacing: 2px;
+            margin: 0 0 25px 0;
+            position: relative;
+        }
+
+        .splash-text {
+            position: absolute;
+            right: -10px;
+            bottom: -18px;
+            color: var(--mc-yellow);
+            font-size: 0.75rem;
+            text-shadow: 2px 2px 0px #3f3f00;
+            transform: rotate(-12deg);
+            animation: splashPulse 0.8s infinite alternate;
+            white-space: nowrap;
+        }
+
+        @keyframes splashPulse {
+            from { transform: rotate(-12deg) scale(1); }
+            to { transform: rotate(-12deg) scale(1.1); }
+        }
+
+        .mc-btn {
+            background: #707070;
+            border: 3px solid #000000;
+            box-shadow: inset -3px -3px 0px 0px #373737, inset 3px 3px 0px 0px #a8a8a8;
+            color: #e0e0e0;
+            font-family: var(--font-pixel);
+            font-size: 0.8rem;
+            padding: 14px 20px;
+            cursor: pointer;
+            text-shadow: 2px 2px 0px #000000;
+            display: inline-block;
+            text-decoration: none;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .mc-btn:hover {
+            background: #2a73a6;
+            box-shadow: inset -3px -3px 0px 0px #173d59, inset 3px 3px 0px 0px #5ca9dd;
+            color: var(--mc-yellow);
+        }
+
+        .mc-btn:active {
+            box-shadow: inset 3px 3px 0px 0px #173d59, inset -3px -3px 0px 0px #5ca9dd;
+        }
+
+        #calculator-main {
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        #calculator-main.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 25px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header-title {
+            font-size: 1.6rem;
+            color: var(--mc-gold);
+            text-shadow: var(--mc-text-shadow);
+            margin-bottom: 8px;
+        }
+
+        .header-sub {
+            font-family: var(--font-read);
+            font-size: 1.3rem;
+            color: #aaaaaa;
+        }
+
+        .mode-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .mode-container .mc-btn {
+            width: auto;
+            min-width: 200px;
+        }
+
+        .mode-container .mc-btn.active {
+            background: #2a73a6;
+            box-shadow: inset -3px -3px 0px 0px #173d59, inset 3px 3px 0px 0px #5ca9dd;
+            color: var(--mc-bright-lime);
+            text-shadow: 0 0 8px var(--mc-bright-lime), 2px 2px 0px #000000;
+        }
+
+        .mc-hud-box {
+            background: var(--mc-gui-dark);
+            border: 4px solid var(--mc-border-black);
+            box-shadow: inset -4px -4px 0px 0px #141414, inset 4px 4px 0px 0px #3c3c3c;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 15px;
+            z-index: 90;
+        }
+
+        .hud-slot {
+            background: #111111;
+            border: 3px solid #000;
+            box-shadow: inset 3px 3px 0px 0px #000000, inset -3px -3px 0px 0px #373737;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .hud-slot.bright-earned-slot {
+            background: #0d280d;
+            border: 3px solid var(--mc-bright-lime);
+            box-shadow: inset 0 0 12px rgba(0, 255, 68, 0.4), inset -3px -3px 0px 0px #004d11;
+        }
+
+        .hud-label {
+            font-size: 0.55rem;
+            color: #aaaaaa;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .hud-val {
+            font-size: 1.2rem;
+            color: var(--mc-green);
+            text-shadow: var(--mc-text-shadow);
+        }
+
+        .hud-val.bright-val {
+            color: var(--mc-bright-lime);
+            text-shadow: 0 0 10px var(--mc-bright-lime), 2px 2px 0px #000000;
+            font-weight: bold;
+        }
+
+        .hud-val.danger {
+            color: var(--mc-red);
+        }
+
+        .course-card {
+            background: var(--mc-gui-bg);
+            border: 4px solid var(--mc-border-black);
+            box-shadow: inset -4px -4px 0px 0px #555555, inset 4px 4px 0px 0px #ffffff;
+            margin-bottom: 25px;
+            color: #212121;
+        }
+
+        .course-card.disabled-course {
+            opacity: 0.4;
+            filter: grayscale(100%);
+        }
+
+        .course-header {
+            background: #8b8b8b;
+            border-bottom: 4px solid var(--mc-border-black);
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .course-title {
+            font-size: 0.85rem;
+            color: #ffffff;
+            text-shadow: var(--mc-text-shadow);
+        }
+
+        .badge-mc {
+            background: #373737;
+            border: 2px solid #000;
+            color: var(--mc-aqua);
+            padding: 4px 8px;
+            font-size: 0.6rem;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        .badge-mc.badge-gpa {
+            color: var(--mc-bright-lime);
+            border-color: #00aa00;
+            box-shadow: 0 0 8px rgba(0, 255, 68, 0.4);
+            text-shadow: 0 0 6px var(--mc-bright-lime), 1px 1px 0px #000;
+        }
+
+        .course-body {
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 2px solid #8b8b8b;
+            font-family: var(--font-read);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        th {
+            font-family: var(--font-pixel);
+            font-size: 0.55rem;
+            color: #373737;
+            text-transform: uppercase;
+            background: #a8a8a8;
+            border-bottom: 3px solid #000;
+        }
+
+        input[type="text"] {
+            background: #ffffff;
+            border: 2px solid #000;
+            box-shadow: inset 2px 2px 0px 0px #8b8b8b;
+            padding: 4px 8px;
+            font-family: var(--font-read);
+            font-size: 1.2rem;
+            width: 100%;
+            max-width: 240px;
+        }
+
+        input[type="number"] {
+            background: #ffffff;
+            border: 2px solid #000;
+            box-shadow: inset 2px 2px 0px 0px #8b8b8b;
+            padding: 4px 8px;
+            font-family: var(--font-read);
+            font-size: 1.2rem;
+            width: 70px;
+        }
+
+        .btn-full-mc {
+            background: var(--mc-bright-lime);
+            border: 2px solid #000000;
+            box-shadow: inset -2px -2px 0px 0px #008800, inset 2px 2px 0px 0px #ffffff, 0 0 8px rgba(0,255,68,0.5);
+            color: #000000;
+            font-family: var(--font-pixel);
+            font-size: 0.55rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            margin-left: 6px;
+            font-weight: bold;
+        }
+
+        .btn-full-mc:hover {
+            background: var(--mc-yellow);
+            box-shadow: inset -2px -2px 0px 0px #888800, inset 2px 2px 0px 0px #ffffff, 0 0 10px rgba(255,255,85,0.8);
+        }
+
+        .val-gain {
+            color: var(--mc-bright-lime);
+            background: rgba(0, 255, 68, 0.18);
+            border: 1px solid rgba(0, 255, 68, 0.5);
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-shadow: 0 0 8px var(--mc-bright-lime), 1px 1px 0px #000000;
+            display: inline-block;
+        }
+
+        .val-loss { 
+            color: #cc0000; 
+            display: inline-block;
+            padding: 2px 6px;
+        }
+
+        .btn-del-mc {
+            background: #ff5555;
+            border: 2px solid #000;
+            color: #fff;
+            font-family: var(--font-pixel);
+            font-size: 0.6rem;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .course-footer {
+            background: #113311;
+            border: 3px solid var(--mc-bright-lime);
+            box-shadow: inset 0 0 10px rgba(0, 255, 68, 0.3);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: #ffffff;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        .bright-earned-text {
+            color: var(--mc-bright-lime);
+            text-shadow: 0 0 8px var(--mc-bright-lime), 1px 1px 0px #000;
+            font-weight: bold;
+        }
+
+        .mc-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #2a73a6;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Voxel Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Music Toggle (Кнопка переключения фоновой музыки) -->
+    <button class="mc-btn music-btn" id="bgm-btn" onclick="toggleBGM()">MUSIC: OFF 🔇</button>
+
+    <!-- 1. MINECRAFT MAIN MENU SCREEN -->
+    <div id="landing-screen">
+        <div class="mc-menu-card">
+            <div class="mc-logo">
+                MINECRAFT GPA
+                <div class="splash-text" id="splash-text">Calculates Grade Loss!</div>
+            </div>
+
+            <button class="mc-btn" onclick="launchCalculator()">SINGLEPLAYER (ENTER)</button>
+            <button class="mc-btn" onclick="setCreditMode(36); launchCalculator();">36 CREDITS MODE</button>
+            <button class="mc-btn" onclick="setCreditMode(30); launchCalculator();">30 CREDITS MODE</button>
+        </div>
+    </div>
+
+    <!-- 2. MAIN CALCULATOR GUI -->
+    <div id="calculator-main">
+        <div class="container">
+            <header>
+                <div class="header-title">GPA COMMAND CENTER</div>
+                <div class="header-sub">Itemized Syllabus Analytics & Grade Loss Tracker</div>
+
+                <div class="mode-container">
+                    <button class="mc-btn active" id="btn-36-credits" onclick="setCreditMode(36)">36 CREDITS (6 COURSES)</button>
+                    <button class="mc-btn" id="btn-30-credits" onclick="setCreditMode(30)">30 CREDITS (5 COURSES)</button>
+                </div>
+            </header>
+
+            <!-- Sticky Inventory HUD Dashboard -->
+            <div class="mc-hud-box">
+                <div class="hud-slot bright-earned-slot">
+                    <div class="hud-label" style="color: var(--mc-bright-lime); text-shadow: 0 0 5px var(--mc-bright-lime);">LEVEL / GPA</div>
+                    <div class="hud-val bright-val" id="overall-gpa">0.00</div>
+                </div>
+                <div class="hud-slot">
+                    <div class="hud-label">GRADE LOSS</div>
+                    <div class="hud-val danger" id="overall-loss">0.00%</div>
+                </div>
+                <div class="hud-slot bright-earned-slot">
+                    <div class="hud-label" style="color: var(--mc-bright-lime); text-shadow: 0 0 5px var(--mc-bright-lime);">QUALITY POINTS</div>
+                    <div class="hud-val bright-val" id="overall-points">0.00</div>
+                </div>
+                <div class="hud-slot">
+                    <div class="hud-label">ACTIVE CREDITS</div>
+                    <div class="hud-val" id="overall-credits">36</div>
+                </div>
+            </div>
+
+            <!-- Course Cards List -->
+            <div id="courses-container"></div>
+        </div>
+    </div>
+
+<script>
+    // ------------------------------------------------------------------
+    // 1. ДВИЖОК ПРЕДЗАГРУЗКИ И ВОСПРОИЗВЕДЕНИЯ ЛОКАЛЬНЫХ ФАЙЛОВ
+    // ------------------------------------------------------------------
+    
+    // Предзагружаем файлы в память
+    const audioFiles = {
+        oof: new Audio("Minecraft-Damage-Oof-Sound-Effect-HD.mp3"),
+        xp:  new Audio("Minecraft-XP-Sound-effect.mp3"),
+        btn: new Audio("Minecraft-Menu-Button-Sound-Effect-Sounffex.mp3")
+    };
+
+    function playSound(audioObject) {
+        try {
+            // Клонируем поток для мгновенного наложения звуков при частых кликах
+            const soundClone = audioObject.cloneNode(true);
+            soundClone.volume = 0.85;
+            soundClone.play().catch(e => {
+                console.log("Ошибка воспроизведения файла:", audioObject.src, e);
+            });
+        } catch(e) {}
+    }
+
+    function playOofSound() {
+        playSound(audioFiles.oof);
+    }
+
+    function playXpSound() {
+        playSound(audioFiles.xp);
+    }
+
+    function playBtnSound() {
+        playSound(audioFiles.btn);
+    }
+
+    // Фоновая музыка (Синтезатор спокойных аккордов Майнкрафта)
+    let audioCtx = null;
+    let isMusicPlaying = false;
+    let bgmInterval = null;
+
+    function getAudioContext() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        return audioCtx;
+    }
+
+    function toggleBGM() {
+        playBtnSound();
+        isMusicPlaying = !isMusicPlaying;
+        const btn = document.getElementById('bgm-btn');
+        if (btn) btn.innerText = isMusicPlaying ? "MUSIC: ON 🎵" : "MUSIC: OFF 🔇";
+
+        if (isMusicPlaying) {
+            playAmbientSequence();
+        } else {
+            if (bgmInterval) clearInterval(bgmInterval);
+        }
+    }
+
+    function playNote(freq, delay, duration) {
+        if (!isMusicPlaying) return;
+        try {
+            const ctx = getAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+
+            const t = ctx.currentTime + delay;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.04, t + 0.6);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + duration);
+        } catch(e) {}
+    }
+
+    function playAmbientSequence() {
+        if (!isMusicPlaying) return;
+        const chords = [
+            [261.63, 329.63, 392.00, 493.88], // Cmaj7
+            [220.00, 261.63, 329.63, 392.00], // Am7
+            [174.61, 220.00, 261.63, 329.63], // Fmaj7
+            [196.00, 246.94, 293.66, 392.00]  // G
+        ];
+
+        let chordIdx = 0;
+        const step = () => {
+            if (!isMusicPlaying) return;
+            const currentChord = chords[chordIdx % chords.length];
+            currentChord.forEach((note, i) => {
+                playNote(note, i * 0.35, 3.8);
+            });
+            chordIdx++;
+        };
+
+        step();
+        bgmInterval = setInterval(step, 5000);
+    }
+
+    // Тексты сплэшей
+    const splashes = [
+        "100% Organic Dirt Free!",
+        "Calculates Grade Loss!",
+        "Local Audio Files Loaded!",
+        "Watch out for Creepers!",
+        "Level Up Your GPA!",
+        "Redstone Powered Logic!"
+    ];
+    document.getElementById('splash-text').innerText = splashes[Math.floor(Math.random() * splashes.length)];
+
+    // ------------------------------------------------------------------
+    // 2. THREE.JS 3D VOXEL BLOCKS & DRAG ENGINE
+    // ------------------------------------------------------------------
+    let camera, scene, renderer;
+    const interactiveBlocks = [];
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let selectedBlock = null;
+    const dragPlane = new THREE.Plane();
+    const planeIntersect = new THREE.Vector3();
+    let isDragging = false;
+
+    function createPixelTexture(baseColor, pixelColor) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 16, 16);
+        ctx.fillStyle = pixelColor;
+        for (let i = 0; i < 20; i++) {
+            ctx.fillRect(Math.floor(Math.random() * 16), Math.floor(Math.random() * 16), 2, 2);
+        }
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.NearestFilter;
+        return texture;
+    }
+
+    function init3DBackground() {
+        const canvas = document.getElementById('bg-canvas');
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const grassMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#5b8731', '#3f631d') });
+        const diamondMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#707070', '#55ffff') });
+        const redstoneMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#707070', '#ff2222') });
+        const goldMat = new THREE.MeshLambertMaterial({ map: createPixelTexture('#707070', '#ffaa00') });
+
+        const blockGeo = new THREE.BoxGeometry(4, 4, 4);
+
+        const blocksData = [
+            { mat: grassMat, x: -22, y: 8, z: -15, speed: 0.15, offset: 0 },
+            { mat: diamondMat, x: 22, y: 10, z: -12, speed: 0.2, offset: 1.5 },
+            { mat: redstoneMat, x: -24, y: -10, z: -10, speed: 0.18, offset: 3.0 },
+            { mat: goldMat, x: 24, y: -8, z: -12, speed: 0.22, offset: 2.0 }
+        ];
+
+        blocksData.forEach(data => {
+            const block = new THREE.Mesh(blockGeo, data.mat);
+            block.position.set(data.x, data.y, data.z);
+            block.userData = { baseX: data.x, baseY: data.y, baseZ: data.z, speed: data.speed, offset: data.offset };
+            scene.add(block);
+            interactiveBlocks.push(block);
+        });
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        dirLight.position.set(10, 20, 15);
+        scene.add(dirLight);
+
+        camera.position.z = 35;
+
+        window.addEventListener('pointerdown', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactiveBlocks);
+
+            if (intersects.length > 0) {
+                selectedBlock = intersects[0].object;
+                isDragging = true;
+                playBtnSound();
+                dragPlane.setFromNormalAndCoplanarPoint(
+                    camera.getWorldDirection(dragPlane.normal).negate(),
+                    selectedBlock.position
+                );
+            }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            if (isDragging && selectedBlock) {
+                raycaster.setFromCamera(mouse, camera);
+                if (raycaster.ray.intersectPlane(dragPlane, planeIntersect)) {
+                    selectedBlock.position.copy(planeIntersect);
+                    selectedBlock.userData.baseX = planeIntersect.x;
+                    selectedBlock.userData.baseY = planeIntersect.y;
+                    selectedBlock.userData.baseZ = planeIntersect.z;
+                }
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+            selectedBlock = null;
+        });
+
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            let elapsedTime = clock.getElapsedTime();
+
+            interactiveBlocks.forEach((block) => {
+                if (block !== selectedBlock) {
+                    const u = block.userData;
+                    block.position.y = u.baseY + Math.sin(elapsedTime * u.speed + u.offset) * 1.2;
+                    block.position.x = u.baseX + Math.cos(elapsedTime * (u.speed * 0.7) + u.offset) * 0.8;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    function launchCalculator() {
+        playXpSound();
+        const landing = document.getElementById('landing-screen');
+        const main = document.getElementById('calculator-main');
+
+        landing.classList.add('fade-out');
+        setTimeout(() => {
+            main.classList.add('active');
+        }, 500);
+    }
+
+    init3DBackground();
+
+    // ------------------------------------------------------------------
+    // 3. GPA & GRADE LOSS CALCULATION ENGINE
+    // ------------------------------------------------------------------
+    let currentCreditMode = 36;
+
+    const initialCourses = [
+        {
+            code: "ECON 120",
+            name: "Managerial Economics",
+            credits: 6,
+            enabled: true,
+            components: [
+                { name: "Homework 1", weight: 5, score: 0 },
+                { name: "Homework 2", weight: 5, score: 0 },
+                { name: "Homework 3", weight: 5, score: 0 },
+                { name: "Homework 4", weight: 5, score: 0 },
+                { name: "Homework 5", weight: 5, score: 0 },
+                { name: "Midterm 1 Exam", weight: 35, score: 0 },
+                { name: "Final Exam", weight: 40, score: 0 }
+            ]
+        },
+        {
+            code: "CEE 302",
+            name: "Geotechnical Engineering",
+            credits: 6,
+            enabled: true,
+            components: [
+                { name: "Homework 1", weight: 3.75, score: 0 },
+                { name: "Homework 2", weight: 3.75, score: 0 },
+                { name: "Homework 3", weight: 3.75, score: 0 },
+                { name: "Homework 4", weight: 3.75, score: 0 },
+                { name: "Lab Report 1: Soil Classification", weight: 3.75, score: 0 },
+                { name: "Lab Report 2: Seepage", weight: 3.75, score: 0 },
+                { name: "Lab Report 3: Oedometer", weight: 3.75, score: 0 },
+                { name: "Lab Report 4: Direct Shear", weight: 3.75, score: 0 },
+                { name: "Quiz 1", weight: 5, score: 0 },
+                { name: "Quiz 2", weight: 5, score: 0 },
+                { name: "Quiz 3", weight: 5, score: 0 },
+                { name: "Quiz 4", weight: 5, score: 0 },
+                { name: "Midterm Exam", weight: 20, score: 0 },
+                { name: "Final Exam", weight: 30, score: 0 }
+            ]
+        },
+        {
+            code: "CEE 304",
+            name: "Fluid Mechanics",
+            credits: 6,
+            enabled: true,
+            components: [
+                { name: "Assignment 1 (Week 3)", weight: 7.5, score: 0 },
+                { name: "Assignment 2 (Week 6)", weight: 7.5, score: 0 },
+                { name: "Assignment 3 (Week 9)", weight: 7.5, score: 0 },
+                { name: "Assignment 4 (Week 13)", weight: 7.5, score: 0 },
+                { name: "Midterm Exam", weight: 30, score: 0 },
+                { name: "Final Exam", weight: 40, score: 0 }
+            ]
+        },
+        {
+            code: "PHIL 210",
+            name: "Ethics",
+            credits: 6,
+            enabled: true,
+            components: [
+                { name: "Class Participation", weight: 10, score: 0 },
+                { name: "Short-Essay Exam", weight: 27.5, score: 0 },
+                { name: "Multiple-Choice Exam", weight: 27.5, score: 0 },
+                { name: "Final Exam", weight: 35, score: 0 }
+            ]
+        },
+        {
+            code: "CEE 306",
+            name: "Civil Engineering Materials",
+            credits: 6,
+            enabled: true,
+            components: [
+                { name: "Assignment 1", weight: 5, score: 0 },
+                { name: "Assignment 2", weight: 5, score: 0 },
+                { name: "Assignment 3", weight: 5, score: 0 },
+                { name: "Assignment 4", weight: 5, score: 0 },
+                { name: "Lab Report 1: Aggregates", weight: 7.5, score: 0 },
+                { name: "Lab Report 2: Fresh Concrete", weight: 7.5, score: 0 },
+                { name: "Lab Report 3: Hardened Concrete", weight: 7.5, score: 0 },
+                { name: "Lab Report 4: Asphalt Binder", weight: 7.5, score: 0 },
+                { name: "Midterm Exam", weight: 25, score: 0 },
+                { name: "Final Exam", weight: 25, score: 0 }
+            ]
+        },
+        {
+            code: "CEE 300",
+            name: "Structural Design - Concrete",
+            credits: 6,
+            enabled: true,
+            components: [
+                { name: "Homework 1", weight: 5, score: 0 },
+                { name: "Homework 2", weight: 5, score: 0 },
+                { name: "Homework 3", weight: 5, score: 0 },
+                { name: "Homework 4", weight: 5, score: 0 },
+                { name: "Quiz 1", weight: 6.67, score: 0 },
+                { name: "Quiz 2", weight: 6.67, score: 0 },
+                { name: "Quiz 3", weight: 6.66, score: 0 },
+                { name: "Midterm Exam", weight: 30, score: 0 },
+                { name: "Final Exam", weight: 30, score: 0 }
+            ]
+        }
+    ];
+
+    function getGradeDetails(percentage) {
+        if (percentage >= 95) return { grade: "A", points: 4.00 };
+        if (percentage >= 90) return { grade: "A-", points: 3.67 };
+        if (percentage >= 85) return { grade: "B+", points: 3.33 };
+        if (percentage >= 80) return { grade: "B", points: 3.00 };
+        if (percentage >= 75) return { grade: "B-", points: 2.67 };
+        if (percentage >= 70) return { grade: "C+", points: 2.33 };
+        if (percentage >= 65) return { grade: "C", points: 2.00 };
+        if (percentage >= 60) return { grade: "C-", points: 1.67 };
+        if (percentage >= 55) return { grade: "D+", points: 1.33 };
+        if (percentage >= 50) return { grade: "D", points: 1.00 };
+        return { grade: "F", points: 0.00 };
+    }
+
+    function setCreditMode(mode) {
+        playBtnSound();
+        currentCreditMode = mode;
+        document.getElementById('btn-36-credits').classList.toggle('active', mode === 36);
+        document.getElementById('btn-30-credits').classList.toggle('active', mode === 30);
+
+        if (mode === 30) {
+            let activeCount = initialCourses.filter(c => c.enabled).length;
+            if (activeCount === 6) {
+                initialCourses[3].enabled = false;
+            }
+        } else if (mode === 36) {
+            initialCourses.forEach(c => c.enabled = true);
+        }
+
+        renderCourses();
+    }
+
+    function toggleCourseEnabled(courseIndex, isChecked) {
+        playBtnSound();
+        initialCourses[courseIndex].enabled = isChecked;
+        
+        let activeCredits = initialCourses.filter(c => c.enabled).reduce((acc, c) => acc + c.credits, 0);
+        
+        if (activeCredits === 30) {
+            currentCreditMode = 30;
+            document.getElementById('btn-36-credits').classList.remove('active');
+            document.getElementById('btn-30-credits').classList.add('active');
+        } else if (activeCredits === 36) {
+            currentCreditMode = 36;
+            document.getElementById('btn-36-credits').classList.add('active');
+            document.getElementById('btn-30-credits').classList.remove('active');
+        }
+
+        renderCourses();
+    }
+
+    function renderCourses() {
+        const container = document.getElementById("courses-container");
+        container.innerHTML = "";
+
+        initialCourses.forEach((course, courseIndex) => {
+            const card = document.createElement("div");
+            card.className = `course-card ${!course.enabled ? 'disabled-course' : ''}`;
+
+            let tableRows = course.components.map((comp, compIndex) => `
+                <tr>
+                    <td>
+                        <input type="text" value="${comp.name}" 
+                               onchange="updateCompName(${courseIndex}, ${compIndex}, this.value)">
+                    </td>
+                    <td>
+                        <input type="number" min="0" max="100" step="0.01" value="${comp.weight}" 
+                               oninput="updateCompWeight(${courseIndex}, ${compIndex}, this.value)">%
+                    </td>
+                    <td>
+                        <input type="number" min="0" max="100" step="1" value="${comp.score}" 
+                               oninput="updateCompScore(${courseIndex}, ${compIndex}, this.value)">%
+                        <button type="button" class="btn-full-mc" onclick="setFullScore(${courseIndex}, ${compIndex})">100%</button>
+                    </td>
+                    <td>
+                        <span class="val-gain" id="contrib-${courseIndex}-${compIndex}">
+                            ${((comp.weight * comp.score) / 100).toFixed(2)}%
+                        </span>
+                    </td>
+                    <td>
+                        <span class="val-loss" id="loss-${courseIndex}-${compIndex}">
+                            ${((comp.weight * (100 - comp.score)) / 100).toFixed(2)}%
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-del-mc" onclick="deleteComponent(${courseIndex}, ${compIndex})">X</button>
+                    </td>
+                </tr>
+            `).join("");
+
+            card.innerHTML = `
+                <div class="course-header">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <input type="checkbox" class="mc-checkbox" ${course.enabled ? 'checked' : ''} onchange="toggleCourseEnabled(${courseIndex}, this.checked)">
+                        <div class="course-title">${course.code}: ${course.name}</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <span class="badge-mc">${course.credits} CREDITS</span>
+                        <span class="badge-mc badge-gpa" id="badge-gpa-${courseIndex}">GRADE: - (0.00)</span>
+                    </div>
+                </div>
+                <div class="course-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Weight</th>
+                                <th>Score</th>
+                                <th>Earned Contribution</th>
+                                <th>Loss</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    <button class="mc-btn" style="font-size: 0.6rem; padding: 8px 12px; width: auto;" onclick="addComponent(${courseIndex})">+ ADD ITEM</button>
+                    <div class="course-footer">
+                        <span>EARNED: <span id="course-total-pct-${courseIndex}" class="bright-earned-text">0.00%</span> | LOSS: <span id="course-loss-pct-${courseIndex}" class="val-loss">0.00%</span></span>
+                        <span>POINTS: <span id="course-qp-${courseIndex}">0.00</span></span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        calculateAll();
+    }
+
+    function updateCompName(cIdx, compIdx, val) {
+        initialCourses[cIdx].components[compIdx].name = val;
+    }
+
+    function updateCompWeight(cIdx, compIdx, val) {
+        initialCourses[cIdx].components[compIdx].weight = parseFloat(val) || 0;
+        calculateAll();
+    }
+
+    function updateCompScore(cIdx, compIdx, val) {
+        const newScore = parseFloat(val) || 0;
+        const oldScore = initialCourses[cIdx].components[compIdx].score;
+
+        if (newScore > oldScore) {
+            playXpSound();
+        } else if (newScore < oldScore) {
+            playOofSound();
+        }
+
+        initialCourses[cIdx].components[compIdx].score = newScore;
+        calculateAll();
+    }
+
+    function setFullScore(cIdx, compIdx) {
+        const oldScore = initialCourses[cIdx].components[compIdx].score;
+        if (oldScore < 100) {
+            playXpSound();
+        } else if (oldScore > 100) {
+            playOofSound();
+        }
+        initialCourses[cIdx].components[compIdx].score = 100;
+        renderCourses();
+    }
+
+    function addComponent(cIdx) {
+        playBtnSound();
+        initialCourses[cIdx].components.push({ name: "New Quest Item", weight: 0, score: 0 });
+        renderCourses();
+    }
+
+    function deleteComponent(cIdx, compIdx) {
+        playBtnSound();
+        initialCourses[cIdx].components.splice(compIdx, 1);
+        renderCourses();
+    }
+
+    function calculateAll() {
+        let totalActiveCredits = 0;
+        let totalActiveQualityPoints = 0;
+        let totalActiveLossWeighted = 0;
+
+        initialCourses.forEach((course, courseIndex) => {
+            let coursePct = 0;
+            let courseLoss = 0;
+
+            course.components.forEach((comp, compIndex) => {
+                const contrib = (comp.weight * comp.score) / 100;
+                const loss = (comp.weight * (100 - comp.score)) / 100;
+                
+                coursePct += contrib;
+                courseLoss += loss;
+
+                const contribEl = document.getElementById(`contrib-${courseIndex}-${compIndex}`);
+                const lossEl = document.getElementById(`loss-${courseIndex}-${compIndex}`);
+
+                if (contribEl) contribEl.innerText = contrib.toFixed(2) + "%";
+                if (lossEl) lossEl.innerText = loss.toFixed(2) + "%";
+            });
+
+            const gradeObj = getGradeDetails(coursePct);
+            const qualityPoints = gradeObj.points * course.credits;
+
+            if (course.enabled) {
+                totalActiveCredits += course.credits;
+                totalActiveQualityPoints += qualityPoints;
+                totalActiveLossWeighted += courseLoss * course.credits;
+            }
+
+            const totalPctEl = document.getElementById(`course-total-pct-${courseIndex}`);
+            const lossPctEl = document.getElementById(`course-loss-pct-${courseIndex}`);
+            const qpEl = document.getElementById(`course-qp-${courseIndex}`);
+            const badgeEl = document.getElementById(`badge-gpa-${courseIndex}`);
+
+            if (totalPctEl) totalPctEl.innerText = coursePct.toFixed(2) + "%";
+            if (lossPctEl) lossPctEl.innerText = courseLoss.toFixed(2) + "%";
+            if (qpEl) qpEl.innerText = qualityPoints.toFixed(2);
+            if (badgeEl) badgeEl.innerText = `GRADE: ${gradeObj.grade} (${gradeObj.points.toFixed(2)})`;
+        });
+
+        const cumulativeGPA = totalActiveCredits > 0 ? (totalActiveQualityPoints / totalActiveCredits) : 0;
+        const avgSemesterLoss = totalActiveCredits > 0 ? (totalActiveLossWeighted / totalActiveCredits) : 0;
+
+        document.getElementById("overall-gpa").innerText = cumulativeGPA.toFixed(2);
+        document.getElementById("overall-loss").innerText = avgSemesterLoss.toFixed(2) + "%";
+        document.getElementById("overall-points").innerText = totalActiveQualityPoints.toFixed(2);
+        document.getElementById("overall-credits").innerText = totalActiveCredits;
+    }
+
+    window.onload = renderCourses;
+</script>
+
+</body>
+</html>
